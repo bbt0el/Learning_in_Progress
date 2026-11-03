@@ -13,6 +13,7 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT,
         text TEXT,
         score REAL,
         label TEXT,
@@ -20,7 +21,10 @@ def init_db():
         created_at TEXT
     )
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_history_created ON history(created_at)")
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_history_session_created "
+        "ON history(session_id, created_at)"
+    )
     conn.commit()
     conn.close()
 
@@ -34,12 +38,12 @@ def save_record(record):
     conn.commit()
     conn.close()
 
-def get_history(limit):
+def get_history(session_id, limit):
     conn = get_conn()
     cur = conn.cursor()
     rows = cur.execute(
-        "SELECT * FROM history ORDER BY created_at DESC LIMIT ?",
-        [limit],
+        "SELECT * FROM history WHERE session_id = ? ORDER BY created_at DESC LIMIT ?",
+        [session_id, limit],
     ).fetchall()
     conn.close()
 
